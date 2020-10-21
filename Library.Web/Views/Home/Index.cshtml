@@ -1,0 +1,78 @@
+﻿@using Library.Model
+
+@model PaginatedList<Book>
+
+@{
+    ViewData["Title"] = "A könyvtár oldala";
+}
+
+@if (Model == null || Model.Count() == 0)
+{
+    <div class="NoBook">Jelenleg nincs könyv a könyvtárban.</div>
+}
+else
+{
+    <form asp-action="Index" method="get">
+        <div class="form-actions no-color">
+            <p>
+                Cím vagy szerző: <input type="text" name="SearchString" value="@ViewData["CurrentFilter"]" />
+                <input type="submit" value="Keresés" class="btn btn-default" />
+            </p>
+        </div>
+    </form>
+    <div class="popularitySortOrder"><a asp-action="Index" asp-route-sortOrder="@ViewData["PopularitySortParam"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">Rendezés népszerűségi sorrendben (alapértelmezett)</a></div>
+    <table class="table">
+        <tr class="tableHead">
+            <th>Borító</th>
+            <th><a asp-action="Index" asp-route-sortOrder="@ViewData["TitleSortParam"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">Cím</a></th>
+            <th>Szerző</th>
+            <th>Kiadás éve</th>
+        </tr>
+        @foreach (Book book in Model)
+        {
+            <tr class="bookItem">
+                <td class="bookItemCover">
+                    <img src="@Url.Action("ImageForBook", new { bookId = book.Id })" class="contentImage" />
+                </td>
+                <td class="bookItemTitle">
+                    <a asp-controller="Home" asp-action="Details" asp-route-bookId="@book.Id">@book.Title</a>
+                </td>
+                <td class="bookItemAuthor">
+                    @book.Author
+                </td>
+                <td class="bookItemYear">
+                    @book.Year
+                </td>
+            </tr>
+        }
+    </table>
+}
+
+@{
+    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+}
+
+@if (Model.PageIndex > 1)
+{
+    <a asp-action="Index"
+       asp-route-sortOrder="@ViewData["CurrentSort"]"
+       asp-route-pageNumber="@(Model.PageIndex - 1)"
+       asp-route-currentFilter="@ViewData["CurrentFilter"]"
+       class="btn btn-default @prevDisabled">
+        Előző
+    </a>
+}
+
+@if (Model.PageIndex < Model.TotalPages)
+{
+    <a asp-action="Index"
+       asp-route-sortOrder="@ViewData["CurrentSort"]"
+       asp-route-pageNumber="@(Model.PageIndex + 1)"
+       asp-route-currentFilter="@ViewData["CurrentFilter"]"
+       class="btn btn-default @nextDisabled">
+        Következő
+    </a>
+}
+
+@*<div class="newBook"> <a asp-controller="Home" asp-action="Create">Könyv létrehozása</a> </div>*@

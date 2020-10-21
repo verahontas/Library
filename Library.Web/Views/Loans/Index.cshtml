@@ -1,0 +1,183 @@
+﻿@using Library.Model
+
+@model LoanViewModel
+
+<environment include="Development">
+    <script src="@Url.Content("~/lib/glDatePicker/glDatePicker.js")"></script>
+</environment>
+<environment exclude="Development">
+    <script src="@Url.Content("~/lib/glDatePicker/glDatePicker.min.js")"></script>
+</environment>
+<script type="text/javascript">
+    $(document).ready(function()
+    {
+        var today = new Date("@Model.LoanFirstDay.ToString("yyyy-MM-dd")");
+
+        var parseDates = function (data)
+        {
+            var dates = new Array(data.length);
+
+            for (var index = 0; index < data.length; ++index) {
+                dates[index] =
+                {
+                    date: new Date(data[index])
+                };
+            }
+
+            return dates;
+        };
+
+        @* dátumkiválaszó elemek konfigurációja *@
+        var startDatePickerConfiguration =
+        {
+            cssName: "flatwhite",
+            monthNames: ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december"],
+            dowNames: ["V", "H", "K", "Sz", "Cs", "P", "Sz"],
+            selectedDate: today,
+            dowOffset: 1,
+            onUpdate: function (options)
+            {
+                @* ha nem lenne érvényes dátum *@
+                if (options.firstDate == null)
+                    return;
+
+                var year = options.firstDate.getFullYear();
+                var month = options.firstDate.getMonth() + 1;
+
+                @* meghívjuk a webszolgáltatást, és az adatok alapján frissítjük a kiválasztható dátumokat *@
+                jQuery.getJSON("api/loandate/" + @Model.Tome.Id + "/" + year + "/" + month,
+                     function (data)
+                     {
+                         options.selectableDates = parseDates(data);
+                     });
+            },
+            onClick: function(el, cell, date, data)
+            {
+                el.val(date.toISOString().substr(0, 10));
+
+                var defaultEndDate = new Date();
+                defaultEndDate.setDate(date.getDate() + 1);
+
+                @* ha változott a kezdődátum, akkor újraállítjuk a vége dátumot is, amennyiben szükséges *@
+                if (new Date($('#LoanLastDay').value) < defaultEndDate)
+                    $('#LoanLastDay').value = defaultEndDate.toLocaleDateString();
+            }
+        };
+
+        var endDatePickerConfiguration = jQuery.extend(true,
+        {
+            selectedDate: new Date("@Model.LoanLastDay.ToString("yyyy-MM-dd")"),
+            onClick: function (el, cell, date, data)
+            {
+                el.val(date.toISOString().substr(0, 10));
+            }
+        }, startDatePickerConfiguration);
+
+        @* létrehozzuk a dátumkiválasztókat *@
+        var startDatePicker = $('#LoanFirstDay').glDatePicker(startDatePickerConfiguration).glDatePicker(true);
+        var endDatePicker = $('#LoanLastDay').glDatePicker(endDatePickerConfiguration).glDatePicker(true);
+
+        @* beállítjuk a kezdetben kiválasztható dátumokat *@
+
+        jQuery.getJSON("api/loandate/" + @Model.Tome.Id + "/" + today.getFullYear() + "/" + today.getMonth(),
+            function (data)
+            {
+                startDatePicker.options.selectableDates = parseDates(data);
+                endDatePicker.options.selectableDates = parseDates(data);
+
+                startDatePicker.render();
+                endDatePicker.render();
+            });
+    });
+</script>
+
+<div class="content">
+    <table>
+        <tr>
+            <td>
+                <strong>Könyv címe:</strong> @Model.Tome.Book.Title
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Kötet azonosítója:</strong> @Model.Tome.Id
+            </td>
+        </tr>
+    </table>
+
+    <form asp-controller="Loans" asp-action="Index" asp-route-tomeId="@Model.Tome.Id">
+        <table>
+            <tr>
+                <td colspan="2" valign="middle">
+                    <div asp-validation-summary="ModelOnly" class="failureNotification"></div>
+
+                    <div class="contentHead">
+                        Személyes adatok:
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td width="120">
+                    Név:
+                </td>
+                <td class="failureNotification">
+                    <input asp-for="GuestName" size="40" />
+                    <span asp-validation-for="GuestName"></span>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Email-cím:
+                </td>
+                <td class="failureNotification">
+                    <input asp-for="GuestEmail" size="40" />
+                    <span asp-validation-for="GuestEmail"></span>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Telefonszám:
+                </td>
+                <td class="failureNotification">
+                    <input asp-for="GuestPhoneNumber" size="40" />
+                    <span asp-validation-for="GuestPhoneNumber"></span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" valign="middle">
+                    <div class="contentHead">
+                        Kölcsönzési adatok:
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Kölcsönzés kezdete:
+                </td>
+                <td class="failureNotification">
+                    <input asp-for="LoanFirstDay" asp-format="{0:yyyy-MM-dd}" />
+                    <span asp-validation-for="LoanFirstDay"></span>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Kölcsönzés vége:
+                </td>
+                <td class="failureNotification">
+                    <input asp-for="LoanLastDay" asp-format="{0:yyyy-MM-dd}" />
+                    <span asp-validation-for="LoanLastDay"></span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" align="right">
+                    <input type="submit" value="Kölcsönzés" class="button" />
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}

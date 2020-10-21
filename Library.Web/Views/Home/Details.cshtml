@@ -1,0 +1,62 @@
+﻿@using System
+@using System.Globalization
+@using Library.Model
+@model Book
+
+@{
+    ViewData["Title"] = @Model.Author + ": " + @Model.Title;
+}
+
+<h1>@Model.Title</h1>
+<hr />
+
+@if (ViewBag.Images != null)
+{
+    foreach (int id in ViewBag.Images)
+    {
+        <a asp-action="Image" asp-route-imageId="@id" asp-route-large="true" target="_blank">
+            <img src="@Url.Action("Image", new { imageId = id })" class="detailsContentImage" />
+        </a>
+        System.Diagnostics.Debug.WriteLine("ez a foreach a detailsben");
+    }
+}
+<br />
+<strong>Szerző: </strong> @Model.Author
+<br />
+<strong>Cím: </strong> @Model.Title
+<br />
+<strong>Megjelenési év: </strong> @Model.Year
+<br />
+<strong>ISBN szám: </strong> @Model.ISBN
+<br />
+
+<div class="listOfTomes">
+    <h2><strong>Elérhető kötetek listája:</strong></h2>
+    @foreach (var tome in Model.Tomes)
+    {
+        <div class="tomeItem">
+            <strong>Kötet azonosítója: </strong> @tome.Id | <a asp-controller="Loans" asp-action="Index" asp-route-tomeId="@tome.Id">Kölcsönzés</a>@* | <a asp-controller="Tomes" asp-action="Delete" asp-route-tomeId="@tome.Id">Kötet törlése</a>*@
+
+            @foreach (var loan in ViewBag.Loans)
+            {
+                if (loan.TomeId == tome.Id)
+                {
+                    <div><strong>Kölcsönözve: </strong>@loan.FirstDay -től @loan.LastDay -ig</div>
+                    <div><strong>Státusz: </strong>
+                    @if (@loan.IsActive)
+                        { <div>aktív</div> }
+                    else
+                        { <div>inaktív</div> } </div>
+                    @*<a asp-controller="Loans" asp-action="ChangeStatus" asp-route-loanId="@loan.Id">Státusz megváltoztatása</a><br />*@
+                    
+                }
+            }
+        </div><hr />
+    }
+</div>
+
+@*<div class="Operations"><a asp-controller="Tomes" asp-action="Create">Kötet hozzáadása</a></div>*@
+
+<div>
+    <a asp-action="Index">Vissza a könyvek listájához</a>
+</div>

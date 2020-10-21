@@ -1,0 +1,10 @@
+﻿@using Library.Model
+
+@model LoanViewModel
+
+<div class="contentHead">A kölcsönzését rögzítettük!</div>
+
+<div class="content">A könyv az alábbi időpontban van foglalva az Ön számára: @Model.LoanFirstDay -tól @Model.LoanLastDay -ig.</div>
+
+<div><a asp-controller="Home" asp-action="Index">Vissza a főoldalra</a></div>
+
